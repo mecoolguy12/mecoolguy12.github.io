@@ -1,11 +1,95 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scratch FNF Chart Compiler (Lua + HTML)</title>
+  <style>
+    :root { --bg:#0f1115; --fg:#e6e9ef; --muted:#98a2b3; --acc:#6ae3ff; --card:#151820; --br:#232838; }
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Roboto,Ubuntu,Inter,sans-serif}
+    .wrap{max-width:1100px;margin:30px auto;padding:0 16px}
+    h1{font-size:20px;margin:0 0 10px}
+    .card{background:var(--card);border:1px solid var(--br);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+    label{display:block;margin:8px 0 6px;color:var(--muted);font-weight:600}
+    textarea, input[type="file"], button, select{width:100%;box-sizing:border-box}
+    textarea{min-height:180px;background:#0b0d12;border:1px solid var(--br);border-radius:12px;color:var(--fg);padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap}
+    button{appearance:none;border:1px solid var(--br);background:#0b0d12;color:var(--fg);padding:10px 14px;border-radius:12px;cursor:pointer}
+    button.primary{background:var(--acc);color:#000;border-color:transparent;font-weight:700}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .badge{display:inline-block;padding:.2em .6em;background:#0b0d12;border:1px solid var(--br);border-radius:999px;margin-left:6px}
+    .grid2{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width: 900px){ .grid2{grid-template-columns:1fr 1fr} }
+    code.k{background:#0b0d12;border:1px solid var(--br);padding:2px 6px;border-radius:8px}
+  </style>
+  <!-- Fengari: Lua in the browser -->
+  <script src="https://unpkg.com/fengari-web/dist/fengari-web.js"></script>
+  <!-- Your Lua compiler logic -->
+  <script type="application/lua" src="compiler.lua"></script>
 </head>
 <body>
-    <img src="IMG_5670.webp" alt="img">
+  <div class="wrap">
+    <h1>Scratch FNF Chart Compiler <span class="badge">Lua + HTML</span></h1>
+    <div class="muted">Turn an FNF chart JSON (Psych/Kade style) into a Scratch-friendly text list.
+      Paste JSON or upload a file, then hit <span class="code k">Compile</span>.</div>
+
+    <div class="card grid2">
+      <div>
+        <label for="chartFile">Upload JSON file</label>
+        <input type="file" id="chartFile" accept="application/json,.json" />
+        <div class="small muted" style="margin-top:8px">or paste JSON below</div>
+        <label for="jsonIn">Chart JSON</label>
+        <textarea id="jsonIn" placeholder="{\n  \"notes\": [ { \"sectionNotes\": [ [742,0,0], [1218,1,750] ] } ]\n}"></textarea>
+        <div class="btnrow" style="margin-top:10px">
+          <button id="compile" class="primary">Compile</button>
+          <button id="downloadTxt">Download .txt</button>
+          <button id="clearIn">Clear Input</button>
+        </div>
+      </div>
+      <div>
+        <label for="txtOut">Output (Scratch-friendly)</label>
+        <textarea id="txtOut" placeholder="[00:00.742] Lane 0 TAP\n[00:01.218] Lane 1 HOLD (750ms)"></textarea>
+        <div class="small muted" style="margin-top:8px">
+          Format per line: <code class="k">[MM:SS.mmm] Lane &lt;n&gt; TAP|HOLD (length ms)</code><br>
+          Easy to convert into three Scratch lists: <code class="k">Times</code>, <code class="k">Lanes</code>, <code class="k">Lengths</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong>GitHub Pages usage</strong>
+      <ol class="small">
+        <li>Create a repo (e.g., <code class="k">fnf-scratch-compiler</code>), add <code class="k">index.html</code> and <code class="k">compiler.lua</code>.</li>
+        <li>Enable GitHub Pages on the repo (Settings → Pages → Deploy from branch → <code class="k">main</code>).</li>
+        <li>Open the Pages URL; everything runs client-side in your browser.</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    // Helpers for file input → textarea
+    const fileInput = document.getElementById('chartFile');
+    const jsonIn = document.getElementById('jsonIn');
+    const txtOut = document.getElementById('txtOut');
+    const clearBtn = document.getElementById('clearIn');
+    fileInput.addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const text = await f.text();
+      jsonIn.value = text;
+    });
+    clearBtn.addEventListener('click', () => { jsonIn.value = ''; txtOut.value=''; });
+
+    // Buttons wired in Lua (compiler.lua) via Fengari; fallback here if Lua hasn't bound yet
+    document.getElementById('compile').addEventListener('click', () => {
+      if (window.__luaCompile) window.__luaCompile();
+    });
+    document.getElementById('downloadTxt').addEventListener('click', () => {
+      if (window.__luaDownload) window.__luaDownload();
+    });
+  </script>
 </body>
 </html>
